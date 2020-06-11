@@ -18,7 +18,7 @@
 	This code will also kick/ban users if they are under 13 years old, if you want it to.
 
 	Change ONLY the user variables, dont change ANYTHING else
-	$mods is the list of IDs of roles that should be able to use the start/stop/set commands.
+	$mods is the list of IDs of roles that should be able to use the start/stop/set/get commands.
 
 	User can only set their birthday once. After that, only mods will be able to change a users birthday by using the -setbday command
 
