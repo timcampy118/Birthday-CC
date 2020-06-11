@@ -46,27 +46,32 @@
 {{/* Checks */}}
 {{range .Member.Roles}} {{if in $mods .}} {{$isMod = true}} {{end}} {{end}}
 {{if not .ExecData}}
-{{if reFind `(?i)mybirthday|setbdays?` .Cmd}}
-	{{with .CmdArgs}}
-		{{$map = split (index . 0) "/"}}
-		{{if and (eq (len .) 2) $isMod}} {{with index . 1 | userArg}} {{$user = .}} {{end}} {{end}}
-	{{end}}
-	{{with $map}}
-		{{if eq (len .) 3}} {{$counter := 0}}
-			{{$year := index . 2 | toInt}}
-			{{if $invertedOrder}} {{$day = index . 1 | toInt}} {{$month = index . 0 | toInt}}
-			{{else}} {{$day = index . 0 | toInt}} {{$month = index . 1 | toInt}}
-			{{end}}
-			{{with $day}} {{if or (gt . 31) (lt . 1)}} {{$error = "Invalid Day."}} {{else}} {{$counter = add $counter 1}} {{end}} {{end}}
-			{{with $month}} {{if or (gt . 12) (lt . 1)}} {{$error = print $error "\nInvalid Month."}} {{else}} {{$counter = add $counter 1}} {{end}} {{end}}
-			{{if not $year}} {{$error = print $error "\nInvalid Year."}} {{else}} {{$counter = add $counter 1}} {{end}}
-			{{$checkDate = newDate $year $month $day 0 0 0}}
-			{{if and (eq $counter 3) (eq (printf "%d" $checkDate.Month) (str $month)) (eq (printf "%d" $checkDate.Day) (str $day)) (eq (printf "%d" $checkDate.Year) (str $year))}} {{$counter = add $counter 1}}
-			{{else}} {{$error = "Invalid date (usually day 31 on a 30 day month, or 29 of Feb in a non leap year)"}}
-			{{end}}
-			{{if eq $counter 4}} {{$isValidDate = true}}
-				{{with reFind `\d+ years` (humanizeTimeSinceDays $checkDate) | reFind `\d+` | toInt}}
-					{{if lt . 13}} {{$isUnderAge = true}} {{end}}
+	{{if reFind `(?i)mybirthday|setbdays?` .Cmd}}
+		{{with .CmdArgs}}
+			{{$map = split (index . 0) "/"}}
+			{{if and (eq (len .) 2) $isMod}} {{with index . 1 | userArg}} {{$user = .}} {{end}} {{end}}
+		{{end}}
+		{{with $map}}
+			{{if eq (len .) 3}} {{$counter := 0}}
+				{{$year := index . 2 | toInt}}
+				{{if $invertedOrder}} {{$day = index . 1 | toInt}} {{$month = index . 0 | toInt}}
+				{{else}} {{$day = index . 0 | toInt}} {{$month = index . 1 | toInt}}
+				{{end}}
+				{{with $day}} {{if or (gt . 31) (lt . 1)}} {{$error = "Invalid Day."}} {{else}} {{$counter = add $counter 1}} {{end}} {{end}}
+				{{with $month}} {{if or (gt . 12) (lt . 1)}} {{$error = print $error "\nInvalid Month."}} {{else}} {{$counter = add $counter 1}} {{end}} {{end}}
+				{{if not $year}} {{$error = print $error "\nInvalid Year."}} {{else}} {{$counter = add $counter 1}} {{end}}
+				{{$checkDate = newDate $year $month $day 0 0 0}}
+				{{if and (eq $counter 3) (eq (printf "%d" $checkDate.Month) (str $month)) (eq (printf "%d" $checkDate.Day) (str $day)) (eq (printf "%d" $checkDate.Year) (str $year))}} {{$counter = add $counter 1}}
+				{{else}} {{$error = "Invalid date (usually day 31 on a 30 day month, or 29 of Feb in a non leap year)"}}
+				{{end}}
+				{{if eq $counter 4}} {{$isValidDate = true}}
+					{{with reFind `\d+ years` (humanizeTimeSinceDays $checkDate) | reFind `\d+` | toInt}}
+						{{if lt . 13}} {{$isUnderAge = true}} {{end}}
+					{{end}}
+				{{end}}
+			{{else}}
+				{{if $invertedOrder}} {{$error = $commonErrorInverted}}
+				{{else}} {{$error = $commonError}}
 				{{end}}
 			{{end}}
 		{{else}}
@@ -74,12 +79,7 @@
 			{{else}} {{$error = $commonError}}
 			{{end}}
 		{{end}}
-	{{else}}
-		{{if $invertedOrder}} {{$error = $commonErrorInverted}}
-		{{else}} {{$error = $commonError}}
-		{{end}}
 	{{end}}
-{{end}}
 {{end}}
 
 {{if $isValidDate}}
