@@ -119,22 +119,28 @@
 					{{dbSet $userMonth "bdays" $insideMap}}
 				{{end}}
 				{{with (dbGet $user.ID "bday").Value}}
-					{{$listIn := cslice}}
-					{{$thisDay := str .Day}} {{$thisMonth := printf "%d" .Month | toInt}}
-					{{with sdict (dbGet (printf "%d" .Month | toInt) "bdays").Value}}
-						{{$needMap := .}}
-						{{range index . $thisDay}}
-							{{if ne . $user.ID}}
-								{{$listIn = $list.Append .}}
+					{{if ne (print .) (print $checkDate)}}
+						{{$listIn := cslice}}
+						{{$thisDay := str .Day}} {{$thisMonth := printf "%d" .Month | toInt}}
+						{{with sdict (dbGet (printf "%d" .Month | toInt) "bdays").Value}}
+							{{$needMap := .}}
+							{{range index . $thisDay}}
+								{{if ne . $user.ID}}
+									{{$listIn = $list.Append .}}
+								{{end}}
 							{{end}}
+							{{$needMap.Set $thisDay $listIn}}
+							{{dbSet $thisMonth "bdays" $needMap}}
 						{{end}}
-						{{$needMap.Set $thisDay $listIn}}
-						{{dbSet $thisMonth "bdays" $needMap}}
+					{{else}}
+						{{$error = print "This is already " $user.Mention "'s birthday."}}
 					{{end}}
 				{{end}}
-				{{dbSet $user.ID "bday" $checkDate}}
-				{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "01/_2/2006")}}
-				{{else}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "_2/01/2006")}}
+				{{if not $error}}
+					{{dbSet $user.ID "bday" $checkDate}}
+					{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "01/_2/2006")}}
+					{{else}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "_2/01/2006")}}
+					{{end}}
 				{{end}}
 			{{else}}
 				{{if $invertedOrder}} {{$error = "Not enough arguments passed.\nCorrect usage is: `-set 12/20/1998 @user`"}}
