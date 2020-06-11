@@ -88,8 +88,8 @@
 {{end}}
 
 {{/* Doing stuff*/}}
-{{if and $isUnderAge $kickUnderAge (not $banUnderAge) (ne $user.ID .User.ID)}} {{execAdmin "kick" $user "We do not allow users under 13 years old in this server."}} {{end}}
-{{if and $isUnderAge $banUnderAge (ne $user.ID .User.ID)}} {{execAdmin "ban" $user "We do not allow users under 13 years old in this server."}} {{end}}
+{{if and $isUnderAge $kickUnderAge (not $banUnderAge) (not $isMod)}} {{execAdmin "kick" $user "We do not allow users under 13 years old in this server."}} {{end}}
+{{if and $isUnderAge $banUnderAge (not $isMod)}} {{execAdmin "ban" $user "We do not allow users under 13 years old in this server."}} {{end}}
 {{if .ExecData}}
 	{{dbDel (sub (toInt currentTime.Day) 1) "bdayannounced"}}
 	{{dbSet currentTime.Day "bdayannounced" true}}
