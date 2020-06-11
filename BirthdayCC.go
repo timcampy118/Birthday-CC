@@ -83,31 +83,94 @@
 {{end}}
 
 {{if $isValidDate}}
-{{$userMonth = printf "%d" $checkDate.Month | toInt}}
-{{with (dbGet $userMonth "bdays").Value}}
-	{{$insideMap = sdict .}}
-{{end}}
+	{{$userMonth = printf "%d" $checkDate.Month | toInt}}
+	{{with (dbGet $userMonth "bdays").Value}}
+		{{$insideMap = sdict .}}
+	{{end}}
 {{end}}
 
 {{/* Doing stuff*/}}
 {{if and $isUnderAge $kickUnderAge (not $banUnderAge) (not $isMod)}} {{execAdmin "kick" $user "We do not allow users under 13 years old in this server."}} {{end}}
 {{if and $isUnderAge $banUnderAge (not $isMod)}} {{execAdmin "ban" $user "We do not allow users under 13 years old in this server."}} {{end}}
 {{if .ExecData}}
-{{dbDel (currentTime.Add (toDuration (mult -24 .TimeHour))).Day "bdayannounced"}}
-{{with (dbGet (printf "%d" currentTime.Month | toInt) "bdays").Value}} {{$today = sdict .}} {{end}}
-{{range (index $today (str currentTime.Day))}}
-	{{if getMember .}}
-		{{$bdayMsg = print $bdayMsg "\n<@" . ">"}}
-		{{$send = true}}
+	{{dbDel (currentTime.Add (toDuration (mult -24 .TimeHour))).Day "bdayannounced"}}
+	{{with (dbGet (printf "%d" currentTime.Month | toInt) "bdays").Value}} {{$today = sdict .}} {{end}}
+	{{range (index $today (str currentTime.Day))}}
+		{{if getMember .}}
+			{{$bdayMsg = print $bdayMsg "\n<@" . ">"}}
+			{{$send = true}}
+		{{end}}
 	{{end}}
-{{end}}
-{{if and $send (not (dbGet currentTime.Day "bdayannounced"))}} {{dbSet currentTime.Day "bdayannounced" true}} {{sendMessageNoEscape nil $bdayMsg}} {{end}}
+	{{if and $send (not (dbGet currentTime.Day "bdayannounced"))}} {{dbSet currentTime.Day "bdayannounced" true}} {{sendMessageNoEscape nil $bdayMsg}} {{end}}
 {{else}}
-{{if $isMod}}
-	{{if and (reFind `set` .Cmd) $isValidDate}}
-		{{if eq (len .CmdArgs) 2}}
+	{{if $isMod}}
+		{{if and (reFind `set` .Cmd) $isValidDate}}
+			{{if eq (len .CmdArgs) 2}}
+				{{with $insideMap}}
+					{{with index . (str $checkDate.Day)}} {{$list = $list.AppendSlice .}} {{end}}
+					{{if not (in $list $user.ID)}}
+						{{$list = $list.Append $user.ID}}
+						{{.Set (str $checkDate.Day) $list}}
+						{{dbSet $userMonth "bdays" $insideMap}}
+					{{end}}
+				{{else}}
+					{{$list = $list.Append $user.ID}}
+					{{$insideMap.Set (str $checkDate.Day) $list}}
+					{{dbSet $userMonth "bdays" $insideMap}}
+				{{end}}
+				{{with (dbGet $user.ID "bday").Value}}
+					{{$listIn := cslice}}
+					{{$thisDay := str .Day}} {{$thisMonth := printf "%d" .Month | toInt}}
+					{{with sdict (dbGet (printf "%d" .Month | toInt) "bdays").Value}}
+						{{$needMap := .}}
+						{{range index . $thisDay}}
+							{{if ne . $user.ID}}
+								{{$listIn = $list.Append .}}
+							{{end}}
+						{{end}}
+						{{$needMap.Set $thisDay $listIn}}
+						{{dbSet $thisMonth "bdays" $needMap}}
+					{{end}}
+				{{end}}
+				{{dbSet $user.ID "bday" $checkDate}}
+				{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "01/_2/2006")}}
+				{{else}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "_2/01/2006")}}
+				{{end}}
+			{{else}}
+				{{if $invertedOrder}} {{$error = "Not enough arguments passed.\nCorrect usage is: `-set 12/20/1998 @user`"}}
+				{{else}} {{$error = "Not enough arguments passed.\nCorrect usage is: `-set 20/12/1998 @user`"}}
+				{{end}}
+			{{end}}
+		{{else if reFind `stop` .Cmd}}
+			{{cancelScheduledUniqueCC .CCID "bdays"}}
+			{{$out = "I will no longer congratulate people on their birthday."}}
+		{{else if reFind `start` .Cmd}}
+			{{if not (dbGet currentTime.Day "bdayannounced")}}	{{execCC .CCID $channelID 1 true}} {{end}}
+			{{scheduleUniqueCC .CCID $channelID 86400 "bdays" true}}
+			{{$out = print "All set! Every day at **" (currentTime.Format "15:04 UTC") "** I will congratulate users if its their birthday."}}
+		{{else if reFind `get` .Cmd}}
+			{{with .CmdArgs}}
+				{{with index . 0 | userArg}}
+					{{$user = .}}
+					{{with (dbGet .ID "bday").Value}}
+						{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " is " (.Format "01/_2/2006")}}
+						{{else}} {{$out = print "The bday of " $user.Mention " is " (.Format "_2/01/2006")}}
+						{{end}}
+					{{else}}
+						{{$error = "This user does not have a bday set."}}
+					{{end}}
+				{{else}}
+					{{$error = "Correct usage: -getbday @user"}}
+				{{end}}
+			{{else}}
+				{{$error = "Correct usage: -getbday @user"}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{if and (reFind `(?i)mybirthday` .Cmd) $isValidDate (not $out)}}
+		{{if not (dbGet .User.ID "bday")}}
 			{{with $insideMap}}
-				{{with index . (str $checkDate.Day)}} {{$list = $list.AppendSlice .}} {{end}}
+				{{with index . (str $checkDate.Day)}} {{$list = $list.AppendSlice .}}  {{end}}
 				{{if not (in $list $user.ID)}}
 					{{$list = $list.Append $user.ID}}
 					{{.Set (str $checkDate.Day) $list}}
@@ -118,77 +181,14 @@
 				{{$insideMap.Set (str $checkDate.Day) $list}}
 				{{dbSet $userMonth "bdays" $insideMap}}
 			{{end}}
-			{{with (dbGet $user.ID "bday").Value}}
-				{{$listIn := cslice}}
-				{{$thisDay := str .Day}} {{$thisMonth := printf "%d" .Month | toInt}}
-				{{with sdict (dbGet (printf "%d" .Month | toInt) "bdays").Value}}
-					{{$needMap := .}}
-					{{range index . $thisDay}}
-						{{if ne . $user.ID}}
-							{{$listIn = $list.Append .}}
-						{{end}}
-					{{end}}
-					{{$needMap.Set $thisDay $listIn}}
-					{{dbSet $thisMonth "bdays" $needMap}}
-				{{end}}
-			{{end}}
-			{{dbSet $user.ID "bday" $checkDate}}
-			{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "01/_2/2006")}}
-			{{else}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "_2/01/2006")}}
+			{{dbSet .User.ID "bday" $checkDate}}
+			{{if $invertedOrder}} {{$out = print "Your birthday was set to be " ($checkDate.Format "01/_2/2006")}}
+			{{else}} {{$out = print "Your birthday was set to be " ($checkDate.Format "_2/01/2006")}}
 			{{end}}
 		{{else}}
-			{{if $invertedOrder}} {{$error = "Not enough arguments passed.\nCorrect usage is: `-set 12/20/1998 @user`"}}
-			{{else}} {{$error = "Not enough arguments passed.\nCorrect usage is: `-set 20/12/1998 @user`"}}
-			{{end}}
-		{{end}}
-	{{else if reFind `stop` .Cmd}}
-		{{cancelScheduledUniqueCC .CCID "bdays"}}
-		{{$out = "I will no longer congratulate people on their birthday."}}
-	{{else if reFind `start` .Cmd}}
-		{{if not (dbGet currentTime.Day "bdayannounced")}}	{{execCC .CCID $channelID 1 true}} {{end}}
-		{{scheduleUniqueCC .CCID $channelID 86400 "bdays" true}}
-		{{$out = print "All set! Every day at **" (currentTime.Format "15:04 UTC") "** I will congratulate users if its their birthday."}}
-	{{else if reFind `get` .Cmd}}
-		{{with .CmdArgs}}
-			{{with index . 0 | userArg}}
-				{{$user = .}}
-				{{with (dbGet .ID "bday").Value}}
-					{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " is " (.Format "01/_2/2006")}}
-					{{else}} {{$out = print "The bday of " $user.Mention " is " (.Format "_2/01/2006")}}
-					{{end}}
-				{{else}}
-					{{$error = "This user does not have a bday set."}}
-				{{end}}
-			{{else}}
-				{{$error = "Correct usage: -getbday @user"}}
-			{{end}}
-		{{else}}
-			{{$error = "Correct usage: -getbday @user"}}
+			{{$error = "Your birthday has already been set."}}
 		{{end}}
 	{{end}}
-{{end}}
-{{if and (reFind `(?i)mybirthday` .Cmd) $isValidDate (not $out)}}
-	{{if not (dbGet .User.ID "bday")}}
-		{{with $insideMap}}
-			{{with index . (str $checkDate.Day)}} {{$list = $list.AppendSlice .}}  {{end}}
-			{{if not (in $list $user.ID)}}
-				{{$list = $list.Append $user.ID}}
-				{{.Set (str $checkDate.Day) $list}}
-				{{dbSet $userMonth "bdays" $insideMap}}
-			{{end}}
-		{{else}}
-			{{$list = $list.Append $user.ID}}
-			{{$insideMap.Set (str $checkDate.Day) $list}}
-			{{dbSet $userMonth "bdays" $insideMap}}
-		{{end}}
-		{{dbSet .User.ID "bday" $checkDate}}
-		{{if $invertedOrder}} {{$out = print "Your birthday was set to be " ($checkDate.Format "01/_2/2006")}}
-		{{else}} {{$out = print "Your birthday was set to be " ($checkDate.Format "_2/01/2006")}}
-		{{end}}
-	{{else}}
-		{{$error = "Your birthday has already been set."}}
-	{{end}}
-{{end}}
 {{end}}
 
 {{/* Outputs */}}
