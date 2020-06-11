@@ -10,12 +10,12 @@
                 This will stop the bdays msgs from being sent
             -setbday
                 This will set a targeted user birthday
-				Example: -set 20/12/1998 @Pedro
-			-getbday
-				This will tell you the birthday of the specified user
-				Example: -getbday @Pedro
+		Example: -set 20/12/1998 @Pedro
+	    -getbday
+		This will tell you the birthday of the specified user
+		Example: -getbday @Pedro
 
-		This code will also kick/ban users if they are under 13 years old, if you want it to.
+	This code will also kick/ban users if they are under 13 years old, if you want it to.
 
         Change ONLY the user variables, dont change ANYTHING else
         $mods is the list of IDs of roles that should be able to use the start/stop/set commands.
