@@ -25,7 +25,7 @@
 	User can only set their birthday once. After that, only mods will be able to change a users birthday by using the -setbday command
 
 	Trigger Type should be regex
-	The actual trigger should be: \A-(myb(irth)?day|(start|stop|set|get)b(irth)?days?)
+	The actual trigger should be: \A-(my|start|stop|set|get)b(irth)?days?
 */}}
 
 {{/* User Variables */}}
@@ -48,7 +48,7 @@
 {{/* Checks */}}
 {{range .Member.Roles}} {{if in $mods .}} {{$isMod = true}} {{end}} {{end}}
 {{if not .ExecData}}
-	{{if reFind `(?i)mybirthday|setbdays?` .Cmd}}
+	{{if reFind `(?i)(my|set)b(irth)?days?` .Cmd}}
 		{{with .CmdArgs}}
 			{{$map = split (index . 0) "/"}}
 			{{if and (eq (len .) 2) $isMod}} {{with index . 1 | userArg}} {{$user = .}} {{end}} {{end}}
@@ -175,7 +175,7 @@
 			{{end}}
 		{{end}}
 	{{end}}
-	{{if and (reFind `(?i)mybirthday` .Cmd) $isValidDate (not $out)}}
+	{{if and (reFind `(?i)myb(irth)?day` .Cmd) $isValidDate (not $out)}}
 		{{if not (dbGet .User.ID "bday")}}
 			{{with $insideMap}}
 				{{with index . (str $checkDate.Day)}} {{$list = $list.AppendSlice .}}  {{end}}
