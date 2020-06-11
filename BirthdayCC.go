@@ -94,7 +94,6 @@
 {{if and $isUnderAge $banUnderAge (not $isMod)}} {{execAdmin "ban" $user "We do not allow users under 13 years old in this server."}} {{end}}
 {{if .ExecData}}
 {{dbDel (currentTime.Add (toDuration (mult -24 .TimeHour))).Day "bdayannounced"}}
-{{$monthNow := printf "%d" currentTime.Month | toInt}}
 {{with (dbGet (printf "%d" currentTime.Month | toInt) "bdays").Value}} {{$today = sdict .}} {{end}}
 {{range (index $today (str currentTime.Day))}}
 	{{if getMember .}}
