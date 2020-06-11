@@ -65,8 +65,8 @@
 			{{else}} {{$error = "Invalid date (usually day 31 on a 30 day month, or 29 of Feb in a non leap year)"}}
 			{{end}}
 			{{if eq $counter 4}} {{$isValidDate = true}}
-				{{with reFind `\d+ years` (humanizeTimeSinceDays $checkDate) | reFind `\d+`}}
-					{{if lt (toInt .) 13}} {{$isUnderAge = true}} {{end}}
+				{{with reFind `\d+ years` (humanizeTimeSinceDays $checkDate) | reFind `\d+` | toInt}}
+					{{if lt . 13}} {{$isUnderAge = true}} {{end}}
 				{{end}}
 			{{end}}
 		{{else}}
