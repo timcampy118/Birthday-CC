@@ -15,6 +15,8 @@
 			This will tell you the birthday of the specified user
 			Example: -getbday @Pedro
 
+	All commands can be used with bday or birthday. Example: -getbday or -getbirthday
+
 	This code will also kick/ban users if they are under 13 years old, if you want it to.
 
 	Change ONLY the user variables, dont change ANYTHING else
@@ -23,7 +25,7 @@
 	User can only set their birthday once. After that, only mods will be able to change a users birthday by using the -setbday command
 
 	Trigger Type should be regex
-	The actual trigger should be: \A-(mybirthday|(start|stop|set|get)bdays?)
+	The actual trigger should be: \A-(myb(irth)?day|(start|stop|set|get)b(irth)?days?)
 */}}
 
 {{/* User Variables */}}
@@ -138,8 +140,8 @@
 				{{end}}
 				{{if not $error}}
 					{{dbSet $user.ID "bday" $checkDate}}
-					{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "01/_2/2006")}}
-					{{else}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "_2/01/2006")}}
+					{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "01/02/2006")}}
+					{{else}} {{$out = print "The bday of " $user.Mention " was set to be " ($checkDate.Format "02/01/2006")}}
 					{{end}}
 				{{end}}
 			{{else}}
@@ -159,8 +161,8 @@
 				{{with index . 0 | userArg}}
 					{{$user = .}}
 					{{with (dbGet .ID "bday").Value}}
-						{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " is " (.Format "01/_2/2006")}}
-						{{else}} {{$out = print "The bday of " $user.Mention " is " (.Format "_2/01/2006")}}
+						{{if $invertedOrder}} {{$out = print "The bday of " $user.Mention " is " (.Format "01/02/2006")}}
+						{{else}} {{$out = print "The bday of " $user.Mention " is " (.Format "02/01/2006")}}
 						{{end}}
 					{{else}}
 						{{$error = "This user does not have a bday set."}}
@@ -188,8 +190,8 @@
 				{{dbSet $userMonth "bdays" $insideMap}}
 			{{end}}
 			{{dbSet .User.ID "bday" $checkDate}}
-			{{if $invertedOrder}} {{$out = print "Your birthday was set to be " ($checkDate.Format "01/_2/2006")}}
-			{{else}} {{$out = print "Your birthday was set to be " ($checkDate.Format "_2/01/2006")}}
+			{{if $invertedOrder}} {{$out = print "Your birthday was set to be " ($checkDate.Format "01/02/2006")}}
+			{{else}} {{$out = print "Your birthday was set to be " ($checkDate.Format "02/01/2006")}}
 			{{end}}
 		{{else}}
 			{{$error = "Your birthday has already been set."}}
